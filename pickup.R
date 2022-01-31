@@ -29,7 +29,7 @@ df2 = df %>% mutate(class = as.numeric(体長.cm.%/%1), id = rep(1:nrow(df)))
 unique(df3$備考)
 df3 = df2 %>% filter(備考 != "耳石なし")
 df3 = df3 %>% filter(備考 != "使用不可（採取不備）") 
-
+unique(df3$備考)
 
 check = df3 %>% group_by(class) %>% summarize(count = n())
 
@@ -90,10 +90,22 @@ for(i in 1:length(len_cate)){
 }
 
 re_check = all %>% filter(pickup == 1) %>% group_by(class) %>% summarize(count = n())
-all = all %>% arrange(id)
-
-all2 = left_join(df2, all %>% select(id, pickup), by = "id") %>% arrange(id)
-all2 = all2 %>% mutate(若齢魚 = ifelse(class < 10, 1, NA))
+all = all %>% mutate(若齢魚 = ifelse(class < 10, 1, NA)) %>% arrange(id)
+unique(all$備考) #ここでは耳石のない個体が選ばれていることは確認できない
 
 setwd(dir_out)
-write.csv(all2, "202110 1-3legキチジ耳石一覧yk.csv", na = "", row.names=FALSE, fileEncoding = "CP932")
+write.csv(all, "202110 1-3legキチジ耳石一覧yk.csv", na = "", row.names=FALSE, fileEncoding = "CP932")
+
+
+
+# all2 = left_join(df2, all %>% select(id, pickup), by = "id") %>% arrange(id)
+# unique(all2$備考)
+# 
+# # なぜかleft_joinの後で変なことが起きてる
+# check = all2 %>% filter(pickup == 1)
+# unique(check$備考)
+# 
+# all2 = all2 %>% mutate(若齢魚 = ifelse(class < 10, 1, NA))
+# 
+# setwd(dir_out)
+# write.csv(all2, "202110 1-3legキチジ耳石一覧yk.csv", na = "", row.names=FALSE, fileEncoding = "CP932")
