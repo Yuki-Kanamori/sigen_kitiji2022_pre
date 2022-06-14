@@ -10,15 +10,16 @@ n_year = 2022
 #========== 表1と図5の作成，および資源量推定で必要な総漁獲量の算出 ==========#
 # step1. 県から提出された漁獲量データ（沖底以外）を集計する
 #        !!県から提出されたデータの構造に合わせてコードの修正が必要!!
+#        県が提出する「沖底」の漁獲量 ≠ 沖底漁績の値，なので，step2で修正する
 # 
 #        
-# step2. 沖底データを集計する
-# step2-1. ~2018までのデータの集計
-# step2-2. 2019~昨年までのデータの集計と作成
-#          県から提出された漁獲量データの「沖底」を沖底漁績の値に置換する必要がある
+# step2. 漁獲量データを集計する
+# step2-0. 昨年度の図5のデータ&最新版の沖底漁績データの読み込み
+# step2-1. 沖底漁績の確定値をstep.2-0に入れる
+# step2-2. 沖底漁績の暫定値をstep.1の県データに入れる
 #          県が提出する「沖底」の漁獲量 ≠ 沖底漁績の値，に注意
-# step2-3. 今年のデータの集計と作成
-# step2-4. 図5に必要なデータの統合
+# step2-3. 図5に必要なデータの統合
+# step2-4. 表1のデータを作成
 #          
 # 
 # step3. 作図
@@ -132,7 +133,7 @@ merge = merge %>% filter(漁業種 != "沖底") # 表1と図5の沖底は沖底�
 
 
 # step2 ---------------------------------------------------------
-#=== step2-1 ===#
+#=== step2-0 ===#
 catch_old = read.csv(paste0(dir, "rawdata_fig5_for_nextSA.csv"), fileEncoding = fileEncoding) # 昨年の資源評価で作成したfig.5の元データ
 
 sheets = excel_sheets(paste0(dir, "okisoko_after2019.xlsx")) #シート名の取得
@@ -144,7 +145,8 @@ for(i in 1:length(sheets)){
 } # 2019年~以降の沖底データ
 
 
-# 沖底漁績の値は確定までに1年かかるので，(沖底漁績の最新年-1)年のデータを修正する
+#=== step2-1 ===#
+# 沖底漁績の値は確定までに1年かかるので，(沖底漁績の最新年-1)年のデータを確定値に修正
 # e.g., 2022年度の資源評価の場合，沖底漁績の最新年 = 2021（暫定値）, (沖底漁績の最新年-1)年 = 2020（確定値）
 catch_old2 = catch_old %>% filter(year != as.numeric(paste0(n_year-2))) 
 
@@ -157,7 +159,7 @@ catch_2yr = rbind(catch_2yr, okisoko_2yr)
 
 
 #=== step2-2 ===#
-# 今年のデータの処理
+# 県からもらった昨年度の漁獲量データの沖底の値を沖底漁績の暫定値に置換
 catch_new = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 = as.numeric(paste0(n_year-1)))
 
 # 資源評価表の図5に合わせて「沖底，小底，沖底・小底以外」の3つのカテゴリーに変更する
@@ -173,6 +175,7 @@ catch_1yr = rbind(total_catch_pref, okisoko_1yr)
 
 
 #=== step2-3 ===#
+# データの統合
 head(catch_old2); head(catch_2yr); head(catch_1yr)
 summary(catch_old2); summary(catch_2yr); summary(catch_1yr)
 
@@ -184,6 +187,10 @@ catch$method = factor(catch$method, levels = c("沖底・小底以外", "小底"
 
 
 
+#=== step2-4 ===#
+# 表1
+table1 = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 = as.numeric(paste0(n_year-1))) %>% group_by(method2) %>% summarize(catch_t = sum(sum)/1000) %>% mutate(year = as.numeric(paste0(n_year-1))) %>% dplyr::rename(method = method2)
+table1 = rbind(table1 %>% filter(method != "沖底") %>% mutate(memo = ""), okisoko_1yr %>% mutate(memo = "暫定値"), okisoko_2yr %>% mutate(memo = "確定値．表の修正が必要")) 
 
 
 
