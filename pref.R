@@ -1,3 +1,5 @@
+require(tidyverse)
+
 dir_prf = "/Users/Yuki/Dropbox/業務/キチジ太平洋北部/SA2022/inputdata/"
 setwd(dir = dir_prf)
 
