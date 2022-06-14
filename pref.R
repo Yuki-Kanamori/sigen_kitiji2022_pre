@@ -3,7 +3,7 @@ require(openxlsx)
 require(readxl)
 
 dir = "/Users/Yuki/Dropbox/業務/キチジ太平洋北部/SA2022/inputdata/"
-setwd(dir = dir_prf)
+setwd(dir = dir)
 fileEncoding = "CP932"
 n_year = 2022
 
@@ -133,6 +133,53 @@ merge = merge %>% filter(漁業種 != "沖底") # 表1と図5の沖底は沖底�
 
 # step2 ---------------------------------------------------------
 #=== step2-1 ===#
+catch_old = read.csv(paste0(dir, "rawdata_fig5_for_nextSA.csv"), fileEncoding = fileEncoding) # 昨年の資源評価で作成したfig.5の元データ
+
+sheets = excel_sheets(paste0(dir, "okisoko_after2019.xlsx")) #シート名の取得
+new_okisoko = NULL
+for(i in 1:length(sheets)){
+  okisoko = read.xlsx(paste0(dir, "/okisoko_after2019.xlsx"), sheet = sheets[i]) %>% filter(漁区名 != "襟裳西")
+  temp = data.frame(catch = sum(okisoko$漁獲量の合計)/1000, year = as.numeric(paste0(sheets[i])))
+  new_okisoko = rbind(new_okisoko, temp)
+} # 2019年~以降の沖底データ
+
+
+# 沖底漁績の値は確定までに1年かかるので，(沖底漁績の最新年-1)年のデータを修正する
+# e.g., 2022年度の資源評価の場合，沖底漁績の最新年 = 2021（暫定値）, (沖底漁績の最新年-1)年 = 2020（確定値）
+catch_old2 = catch_old %>% filter(year != as.numeric(paste0(n_year-2))) 
+
+catch_2yr = catch_old %>% filter(year == as.numeric(paste0(n_year-2))) 
+catch_2yr = catch_2yr %>% mutate(catch_t = ifelse(catch_2yr$method == "沖底", new_okisoko %>% filter(year == (n_year-2)) %>% select(catch), catch_2yr$catch_t))
+
+
+
+#=== step2-2 ===#
+# 今年のデータの処理
+catch_new = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 = as.numeric(paste0(n_year)))
+
+# 資源評価表の図5に合わせて「沖底，小底，沖底・小底以外」の3つのカテゴリーに変更する
+catch_new = catch_new %>% mutate(method = ifelse(str_detect(catch_new$method2, pattern = "沖底"), "沖底", ifelse(str_detect(catch_new$method2, pattern = "小底"), "小底", "沖底・小底以外"))) %>% select(-method2) %>% dplyr::rename(year = 年) %>% dplyr::rename(catch_kg = sum) %>% mutate(sum = catch_kg/1000) 
+total_catch_pref = catch_new %>% filter(method != "沖底") # 図5の沖底は沖底漁績の値を使うため，県が提出した沖底の値は抜く
+
+okisoko_1yr = data.frame(catch_kg = NA, year = as.numeric(paste0(n_year)), method = "沖底", sum = new_okisoko %>% filter(year == as.numeric(paste0(n_year-1))) %>% select(catch) %>% dplyr::rename(sum = catch))
+
+catch_1yr = rbind(total_catch_pref, okisoko_1yr)
+
+
+
+#=== step2-3 ===#
+head(catch_old2); head(catch_2yr); head(catch_1yr)
+catch = rbind(catch_old2, catch_2yr, catch_1yr %>% select(-catch_kg) %>% dplyr::rename(catch_t = sum))
+
+summary(catch)
+catch = catch %>% dplyr::group_by(method, year) %>% dplyr::summarize(catch_t = sum(sum))
+unique(catch$method)
+levels(catch$method) 
+catch$method = factor(catch$method, levels = c("沖底・小底以外", "小底", "沖底")) 
+
+
+
+
 # ~2018までの漁獲量データを読み込む
 catch_old = read.csv(paste0(dir, "catchdata_old.csv"), fileEncoding = fileEncoding) %>% na.omit()
 catch_old = catch_old[, c(1, 3:5)]
@@ -177,7 +224,7 @@ summary(catch)
 catch = catch %>% dplyr::group_by(method, year) %>% dplyr::summarize(catch_t = sum(sum))
 unique(catch$method)
 levels(catch$method) 
-catch$method = factor(catch$method, levels = c("沖底・小底以外", "小底", "沖底"))
+catch$method = factor(catch$method, levels = c("沖底・小底以外", "小底", "沖底")) 
 
 
 
