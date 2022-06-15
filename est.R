@@ -207,7 +207,7 @@ summary(length)
 #   new_catchF = rbind(new_catchF, temp)
 # }
 old_catchF = olddata %>% filter(data == 'catch_fisheries') %>% gather(key = year_tag, value = catch, 2:(ncol(olddata)-1)) %>% mutate(year = as.numeric(str_sub(year_tag, 2, 5))) %>% select(-year_tag, -data,-age) #これは表1の古いデータ（つまり県のデータ+沖底データ）
-new_catchF = catch2 %>% filter(year > (n_year-3)) %>% dplyr::rename(catch = total_catch_t)
+new_catchF = catch2 %>% filter(year > 2018) %>% dplyr::rename(catch = total_catch_t)
 catchF = rbind(old_catchF, new_catchF)
 # okisoko_all = rbind(old_catchF, new_catchF) #資源評価には使わないが，これはこれで必要なのでオブジェクト名を変えて残した
 # # catch data from prefectures
