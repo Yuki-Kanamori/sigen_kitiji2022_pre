@@ -72,26 +72,29 @@ for(i in 1:length(sheets)){
   add = add %>% mutate(length_cate = rep(1:(min(add$length_cate)-1)), number = 0)
   NAA = rbind(add, NAA)
   NAA = NAA %>% arrange(length_cate, age) 
-  sum = NAA %>% group_by(length_cate) %>% summarize(sum = sum(number))
-  # sum = ddply(NAA, .(length_cate), summarize, sum = sum(number))
+  sum = NAA %>% group_by(length_cate) %>% summarize(sum = sum(number)) %>% mutate(age = 11) %>% dplyr::rename(number = sum)
+  number_at_age = rbind(NAA, sum) %>% tidyr::spread(key = length_cate, value = number)
+  number_at_age$age = as.character(number_at_age$age)
+  number_at_age[12, 1] = "total"
   
-  NAA2 = NAA %>% tidyr::spread(key = length_cate, value = number) # 31列
-  sum2 = colSums(NAA2) %>% as.vector(ncol = ncol(NAA2))
-  
-  sum2 = sum %>% tidyr::spread(key = length_cate, value = sum) %>% mutate(age = "total")
-  
-  
-  number_at_age = rbind(NAA2, sum2)
+  # NAA2 = NAA %>% tidyr::spread(key = length_cate, value = number) # 31列
+  # sum2 = sum %>% tidyr::spread(key = length_cate, value = sum) %>% mutate(age = "total")
+  # colnames(sum2)
+  # colnames(NAA2)
+  # number_at_age = rbind(NAA2, sum2)
   #write.csv(number_at_age, "number_at_age.csv", fileEncoding = fileEncoding)
   
   # step 3; make the tables of age composition (AC)
-  AC = left_join(NAA, sum, by = "length_cate") %>% mutate(freq = ifelse(sum > 0, number/sum, 0))
+  AC = left_join(NAA, sum %>% select(-age) %>% dplyr::rename(sum = number), by = "length_cate") %>% mutate(freq = ifelse(sum > 0, number/sum, 0))
   AC = AC %>% select(length_cate, age, freq)
-  a_sum = ddply(AC, .(length_cate), summarize, sum = sum(freq))
+  a_sum = AC %>% group_by(length_cate) %>% summarize(sum = sum(freq)) %>% mutate(age = 11) %>% dplyr::rename(freq = sum)
+  age_composition = rbind(AC, a_sum) %>% tidyr::spread(key = length_cate, value = freq)
+  age_composition$age = as.character(age_composition$age)
+  age_composition[12, 1] = "total"
   
-  age_composition = AC %>% tidyr::spread(key = length_cate, value = freq)
-  a_sum2 = a_sum %>% tidyr::spread(key = length_cate, value = sum) %>% mutate(age = "total")
-  age_composition = rbind(age_composition, a_sum2)
+  # age_composition = AC %>% tidyr::spread(key = length_cate, value = freq)
+  # a_sum2 = a_sum %>% tidyr::spread(key = length_cate, value = sum) %>% mutate(age = "total")
+  # age_composition = rbind(age_composition, a_sum2)
   #write.csv(age_composition, "number_at_age_freq.csv", fileEncoding = fileEncoding)
   # freq at age?
   
@@ -111,17 +114,21 @@ for(i in 1:length(sheets)){
     add = data.frame(length_cate = 30, age = rep(0:10), freq = 0, number = 0, bisu = 0)
     AC2 = rbind(AC2, add)
   }
-  num_ac2 = ddply(AC2, .(length_cate), summarize, total = mean(number))
+  num_ac2 = AC2 %>% group_by(length_cate) %>% summarize(total = mean(number)) %>% mutate(age = 11) %>% dplyr::rename(bisu = total)
+  number_at_age2 = rbind(AC2 %>% select(age, length_cate, bisu), num_ac2) %>% tidyr::spread(key = length_cate, value = bisu)
+  number_at_age2$age = as.character(number_at_age2$age)
+  number_at_age2[12, 1] = "total"
   
-  number_at_age2 = AC2 %>% select(length_cate, age, bisu) %>% tidyr::spread(key = length_cate, value = bisu)
-  num_ac2 = num_ac2 %>% tidyr::spread(key = length_cate, value = total) %>% mutate(age = "total")
   
-  number_at_age2 = rbind(number_at_age2, num_ac2)
-  # x = number_at_age2[1:(nrow(number_at_age2)-1), 2:ncol(number_at_age2)]
-  # apply(x, 2, sum) - number_at_age2[nrow(number_at_age2), 2:ncol(number_at_age2)]
-  
-  number_at_age2[2,5] = number_at_age2[nrow(number_at_age2), 5]
-  # write.csv(number_at_age2, "number_at_age_exp.csv")
+  # number_at_age2 = AC2 %>% select(length_cate, age, bisu) %>% tidyr::spread(key = length_cate, value = bisu)
+  # num_ac2 = num_ac2 %>% tidyr::spread(key = length_cate, value = total) %>% mutate(age = "total")
+  # 
+  # number_at_age2 = rbind(number_at_age2, num_ac2)
+  # # x = number_at_age2[1:(nrow(number_at_age2)-1), 2:ncol(number_at_age2)]
+  # # apply(x, 2, sum) - number_at_age2[nrow(number_at_age2), 2:ncol(number_at_age2)]
+  # 
+  # number_at_age2[2,5] = number_at_age2[nrow(number_at_age2), 5]
+  # # write.csv(number_at_age2, "number_at_age_exp.csv")
   
   
   # step 5; calculate the weight at age, or at length -----------------------
@@ -131,8 +138,10 @@ for(i in 1:length(sheets)){
   mode(number_at_age3$age)
   length = number_at_age3 %>% mutate(sum_length = (as.numeric(as.character(as.factor(length))) + 0.5)*number)
   
-  s_length_age = ddply(length, .(age), summarize, sum_l = sum(sum_length))
-  s_number_age = ddply(length, .(age), summarize, sum_n = sum(number))
+  s_length_age = length %>% group_by(age) %>% summarize(sum_l = sum(sum_length))
+  s_number_age = length %>% group_by(age) %>% summarize(sum_n = sum(number))
+  # s_length_age = ddply(length, .(age), summarize, sum_l = sum(sum_length))
+  # s_number_age = ddply(length, .(age), summarize, sum_n = sum(number))
   
   mean_length_weight_at_age = left_join(s_length_age, s_number_age, by = "age") %>% mutate(mean_cm = sum_l/sum_n) %>% select(age, mean_cm) %>% mutate(mean_mm = mean_cm*10) %>% mutate(weight = (1.86739*10^(-5))*(mean_mm^3.06825547)) 
   # write.csv(mean_length_weight_at_age, "mean_length_weight_at_age.csv")
