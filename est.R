@@ -185,43 +185,14 @@ for(i in 1:length(sheets)){
 }
 length = rbind(old_length, temp_length)
 summary(length)
-####### mistake in 2020 assessment (okisoko data was used for catch when estimating biomass) #######
-# combine the catch data
-# okisoko
-# new_catchF = NULL
-# for(i in 1:length(sheets)){
-#   okisoko = read.xlsx("okisoko_after2019.xlsx", sheet = sheets[i])
-#   temp = data.frame(catch = sum(okisoko$漁獲量の合計)/1000, year = as.numeric(paste0(sheets[i])))
-#   new_catchF = rbind(new_catchF, temp)
-# }
-# 
-# old_catchF = olddata %>% filter(data == 'catch_fisheries') %>% gather(key = year_tag, value = catch, 2:(ncol(olddata)-1)) %>% mutate(year = as.numeric(str_sub(year_tag, 2, 5))) %>% select(-year_tag, -data,-age)
+
+
+# old_catchF = olddata %>% filter(data == 'catch_fisheries') %>% gather(key = year_tag, value = catch, 2:(ncol(olddata)-1)) %>% mutate(year = as.numeric(str_sub(year_tag, 2, 5))) %>% select(-year_tag, -data,-age) #これは表1の古いデータ（つまり県のデータ+沖底データ）
+# new_catchF = catch2 %>% filter(year > 2018) %>% dplyr::rename(catch = total_catch_t)
 # catchF = rbind(old_catchF, new_catchF)
-########################################################################
-# okisoko
-# sheets = excel_sheets(paste0(dir, "okisoko_after2019.xlsx")) #シート名の取得
-# new_catchF = NULL
-# for(i in 1:length(sheets)){
-#   okisoko = read.xlsx(paste0(dir, "/okisoko_after2019.xlsx"), sheet = sheets[i]) %>% filter(漁区名 != "襟裳西")
-#   temp = data.frame(catch = sum(okisoko$漁獲量の合計)/1000, year = as.numeric(paste0(sheets[i])))
-#   new_catchF = rbind(new_catchF, temp)
-# }
-old_catchF = olddata %>% filter(data == 'catch_fisheries') %>% gather(key = year_tag, value = catch, 2:(ncol(olddata)-1)) %>% mutate(year = as.numeric(str_sub(year_tag, 2, 5))) %>% select(-year_tag, -data,-age) #これは表1の古いデータ（つまり県のデータ+沖底データ）
-new_catchF = catch2 %>% filter(year > 2018) %>% dplyr::rename(catch = total_catch_t)
-catchF = rbind(old_catchF, new_catchF)
-# okisoko_all = rbind(old_catchF, new_catchF) #資源評価には使わないが，これはこれで必要なのでオブジェクト名を変えて残した
-# # catch data from prefectures
-# total_catch_old = read.csv(paste0(dir, "pref_catch_old.csv"), fileEncoding = fileEncoding)
-# total_catch_old = total_catch_old %>% gather(key = year, value = catch) %>% mutate(year = as.numeric(str_sub(year, 2, 5)))
-# 
-# total_catch_new_pref = merge %>% gather(key = pref, value = catch, 2:ncol(merge)) %>% filter(漁業種 != "沖底") %>% dplyr::summarize(total = sum(catch)/1000)
-# total_catch_new = data.frame(year = 2020, catch = total_catch_new_pref+new_catchF%>% filter(year == (n_year-1)) %>% select(catch))
-# colnames(total_catch_new) = c("year", "catch")
-# catchF = rbind(total_catch_old, total_catch_new) #沖底以外は県からのデータを使う
-# 
-# # total_catch_pref = data.frame(year = 2020, catch = total_catch_pref)
-# # colnames(total_catch_pref) = c("year", "catch")
-# # catchF = rbind(total_catch_pref_old, total_catch_pref) #catchFは県からのデータを使う
+
+catchF = catch2 %>% filter(year > 1994) %>% dplyr::rename(catch = total_catch_t)
+
 summary(catchF)
 ### survival rate at age
 survival = NULL
@@ -410,14 +381,6 @@ g = ggplot(trend, aes(x = year, y = total/1000))
 p = geom_point(shape = 20, size = 3)
 l = geom_line(size = 0.6, linetype = "solid")
 lab = labs(x = "年", y = "資源量（千トン）", shape = "")
-# th = theme(panel.grid.major = element_blank(),
-#            panel.grid.minor = element_blank(),
-#            axis.text.x = element_text(size = rel(1.8), angle = 90, colour = "black"),
-#            axis.text.y = element_text(size = rel(1.8), colour = "black"),
-#            axis.title.x = element_text(size = rel(1.5)),
-#            axis.title.y = element_text(size = rel(1.5)),
-#            legend.title = element_text(size = rel(1.8)),
-#            strip.text.x = element_text(size = rel(1.8)))
 th = theme(aspect.ratio = 6.88/11.49,
            panel.grid.major = element_blank(),
            panel.grid.minor = element_blank(),
@@ -430,13 +393,15 @@ th = theme(aspect.ratio = 6.88/11.49,
 level_l = geom_hline(yintercept = low/1000, linetype = "dashed", color = "gray50")
 level_h = geom_hline(yintercept = high/1000, linetype = "dashed", color = "gray50")
 fig10 = g+p+l+lab+theme_bw(base_family = "HiraKakuPro-W3")+ theme(legend.position = 'none')+th+theme(legend.position = 'none')+scale_x_continuous(breaks=seq(1996, 2021, by = 5), expand = c(0.03, 0.03))+scale_y_continuous(breaks=seq(0, 13, by = 5), expand = c(0,0),limits = c(0, 13))+level_l+level_h+annotate("text",label="高位", x = 1997, y = 12, family="HiraKakuPro-W3", size = 4)+annotate("text",label="中位", x = 1997, y = 7.8, family="HiraKakuPro-W3", size = 4)+annotate("text",label="低位", x = 1997, y = 4, family="HiraKakuPro-W3", size = 4)
+
 ### year trend of stock number (fig. 11)
 est = est %>% mutate(age2 = ifelse(age > 4, "5歳以上", "2-4歳"))
 summary(est)
 N_trend = est %>% na.omit() %>% dplyr::group_by(year, age2) %>% dplyr::summarize(number = sum(number)/1000)
 est2 = est
 est2[is.na(est2)] = 0
-est2 = ddply(est2, .(year, age2), summarize, total = sum(number))
+est2 = est2 %>% group_by(year, age2) %>% summarize(total = sum(number))
+# est2 = ddply(est2, .(year, age2), summarize, total = sum(number))
 summary(est2)
 levels(est2$age2) 
 unique(est$age2)
@@ -459,6 +424,7 @@ th = theme(panel.grid.major = element_blank(),
            legend.background = element_rect(fill = "white", size = 0.4, linetype = "solid", colour = "black"))
 c = scale_fill_manual(values =  c("black", "white"))
 fig11 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(breaks=seq(1996, 2020, by = 2), expand = c(0, 0.5))+scale_y_continuous(expand = c(0,0),limits = c(0, 150))
+
 ### year trend of fishing (fig. 13)
 # F values
 g = ggplot(fishing_trend %>% filter(data == "f") %>% na.omit(), aes(x = year, y = value))
