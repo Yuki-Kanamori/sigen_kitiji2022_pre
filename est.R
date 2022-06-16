@@ -398,12 +398,12 @@ level_h = geom_hline(yintercept = high/1000, linetype = "dashed", color = "gray5
 fig10 = g+p+l+lab+theme_bw(base_family = "HiraKakuPro-W3")+ theme(legend.position = 'none')+th+theme(legend.position = 'none')+scale_x_continuous(breaks=seq(1996, 2021, by = 5), expand = c(0.03, 0.03))+scale_y_continuous(breaks=seq(0, 13, by = 5), expand = c(0,0),limits = c(0, 13))+level_l+level_h+annotate("text",label="高位", x = 1997, y = 12, family="HiraKakuPro-W3", size = 4)+annotate("text",label="中位", x = 1997, y = 7.8, family="HiraKakuPro-W3", size = 4)+annotate("text",label="低位", x = 1997, y = 4, family="HiraKakuPro-W3", size = 4)
 
 ### year trend of stock number (fig. 11)
-est = est %>% mutate(age2 = ifelse(age > 4, "5歳以上", "2-4歳"))
+est = est %>% dplyr::mutate(age2 = ifelse(age > 4, "5歳以上", "2-4歳"))
 summary(est)
 N_trend = est %>% na.omit() %>% dplyr::group_by(year, age2) %>% dplyr::summarize(number = sum(number)/1000)
 est2 = est
 est2[is.na(est2)] = 0
-est2 = est2 %>% group_by(year, age2) %>% summarize(total = sum(number))
+est2 = est2 %>% dplyr::group_by(year, age2) %>% dplyr::summarize(total = sum(number))
 # est2 = ddply(est2, .(year, age2), summarize, total = sum(number))
 summary(est2)
 levels(est2$age2) 
