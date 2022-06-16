@@ -15,8 +15,8 @@ require(stringr)
 require(abind)
 require(gridExtra)
 require(ggrepel)
-require(grid)
-require(gtable)
+require(grid) # fig2のみ
+require(gtable) # fig2のみ
 
 # set working directory -----------------------------------------------------------
 # please change here
