@@ -15,14 +15,13 @@ ns = ns %>% mutate(number_sel = ns$number/ns$q)
 # ns2 = ns2 %>% spread(key = area, value = total)
 # summary(ns2)
 # ns2$n_rate = ns2$北部/(ns2$北部+ns2$南部)
-ns = ns %>% mutate(weight = 1.867*10^(-5)*ns$size^(3.068))
-ns = ns %>% mutate(biomass_sel = ns$number_sel*ns$weight)
-ns3 = ns %>% group_by(year, area) %>% summarize(total_number = sum(number_sel), total_biomass = sum(biomass_sel))
+ns = ns %>% dplyr::mutate(weight = 1.867*10^(-5)*ns$size^(3.068))
+ns = ns %>% dplyr::mutate(biomass_sel = ns$number_sel*ns$weight)
+ns3 = ns %>% dplyr::group_by(year, area) %>% dplyr::summarize(total_number = sum(number_sel), total_biomass = sum(biomass_sel))
 # ns3 = ddply(ns, .(year, area), summarize, total_number = sum(number_sel), total_biomass = sum(biomass_sel))
 ns4 = left_join(ns3 %>% select(-total_biomass) %>% spread(key = area, value = total_number), ns3 %>% select(-total_number) %>% spread(key = area, value = total_biomass), by = "year") 
 
-ns4 = ns4 %>% dplyr::mutate(n_rate_number = ns4$北部.x/(ns4$南部.x+ns4$北部.x), n_rate_biomass = ns4$北部.y/(ns4$南部.y+ns4$北部.y)) #なぜかエラーがでる
-
+# ns4 = ns4 %>% dplyr::mutate(n_rate_number = ns4$北部.x/(ns4$南部.x+ns4$北部.x), n_rate_biomass = ns4$北部.y/(ns4$南部.y+ns4$北部.y)) #なぜかエラーがでる
 ns4$n_rate_number = ns4$北部.x/(ns4$南部.x+ns4$北部.x)
 ns4$n_rate_biomass = ns4$北部.y/(ns4$南部.y+ns4$北部.y)
 ns4_2 = ns4 %>% mutate(year = n_year + 1)
@@ -51,7 +50,7 @@ fig_a33 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuo
 
 
 # step 6; spawner-recruitment relationship ----------------------
-ns_rec = ns %>% group_by(year, size_class, size) %>% summarize(number = sum(number))
+ns_rec = ns %>% dplyr::group_by(year, size_class, size) %>% dplyr::summarize(number = sum(number))
 # ns_rec = ddply(ns, .(year, size_class, size), summarize, number = sum(number))
 
 net_eff = data.frame(size = seq(15, 315, 10)) 
