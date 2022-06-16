@@ -33,7 +33,7 @@ ao = read.xlsx(paste0(dir, "catch_pref.xlsx"), sheet = "ao") %>% select(漁法, 
 summary(ao)
 
 # 県が提出した漁業種類ごとに漁獲量を集計
-ao_sum = ao %>% group_by(method) %>% summarize(sum_temp = sum(catch_kg)) # kg
+ao_sum = ao %>% dplyr::group_by(method) %>% dplyr::summarize(sum_temp = sum(catch_kg)) # kg
 
 # 資源評価表の表1に合わせて「沖底，小底，刺網，延縄，定置，その他」の6つのカテゴリーに変更する
 ao_sum$method
@@ -165,7 +165,7 @@ catch_new = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 =
 # 資源評価表の図5に合わせて「沖底，小底，沖底・小底以外」の3つのカテゴリーに変更する
 catch_new = catch_new %>% mutate(method = ifelse(str_detect(catch_new$method2, pattern = "沖底"), "沖底", ifelse(str_detect(catch_new$method2, pattern = "小底"), "小底", "沖底・小底以外"))) %>% select(-method2) %>% dplyr::rename(year = 年) %>% dplyr::rename(catch_kg = sum) %>% mutate(sum = catch_kg/1000) 
 total_catch_pref = catch_new %>% filter(method != "沖底") # 図5の沖底は沖底漁績の値を使うため，県が提出した沖底の値は抜く
-total_catch_pref = total_catch_pref %>% group_by(year, method) %>% summarize(catch_t = sum(sum))
+total_catch_pref = total_catch_pref %>% dplyr::group_by(year, method) %>% dplyr::summarize(catch_t = sum(sum))
 
 
 okisoko_1yr = data.frame(catch_kg = NA, year = as.numeric(paste0(n_year-1)), method = "沖底", sum = new_okisoko %>% filter(year == as.numeric(paste0((n_year-1)))) %>% select(catch) %>% dplyr::rename(catch_t = catch)) %>% select(-catch_kg)
@@ -189,7 +189,7 @@ catch$method = factor(catch$method, levels = c("沖底・小底以外", "小底"
 
 #=== step2-4 ===#
 # 表1
-table1 = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 = as.numeric(paste0(n_year-1))) %>% group_by(method2) %>% summarize(catch_t = sum(sum)/1000) %>% mutate(year = as.numeric(paste0(n_year-1))) %>% dplyr::rename(method = method2)
+table1 = rbind(ao_sum, iwa_sum, miya_sum, fuku_sum, iba_sum) %>% mutate(年 = as.numeric(paste0(n_year-1))) %>% dplyr::group_by(method2) %>% dplyr::summarize(catch_t = sum(sum)/1000) %>% mutate(year = as.numeric(paste0(n_year-1))) %>% dplyr::rename(method = method2)
 table1 = rbind(table1 %>% filter(method != "沖底") %>% mutate(memo = ""), okisoko_1yr %>% mutate(memo = "暫定値"), okisoko_2yr %>% mutate(memo = "確定値．表の修正が必要")) 
 
 
