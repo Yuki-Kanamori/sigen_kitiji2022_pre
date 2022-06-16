@@ -45,7 +45,7 @@ for(i in 1:length(sheets)){
   df3$age3 = ifelse(df3$age2 > 10, 10, df3$age2)
   df3 = na.omit(df3)
   summary(df3)
-  naa = df3 %>% group_by(length_mm, age3) %>% summarize(number = sum(count))
+  naa = df3 %>% dplyr::group_by(length_mm, age3) %>% dplyr::summarize(number = sum(count))
   # naa = ddply(df3, .(length_mm, age3), summarize, number = sum(count))
   
   length_mm = rep(seq(min(df3$length_mm), max(df3$length_mm)), length(unique(df3$age3))+1) #1761rows
@@ -62,17 +62,19 @@ for(i in 1:length(sheets)){
   naa2 = merge(naa, tag, by = c("length_mm", "age"), all = T)
   naa2$number = ifelse(is.na(naa2$number), 0, naa2$number)
   summary(naa2)
-  NAA = naa2 %>% group_by(age, length_cate) %>% summarize(number = sum(number))
+  NAA = naa2 %>% dplyr::group_by(age, length_cate) %>% dplyr::summarize(number = sum(number))
   # NAA = ddply(naa2, .(age, length_cate), summarize, number = sum(number))
   NAA$length_cate = as.numeric(NAA$length_cate)
   summary(NAA)
   
-  # add the data that NAA does not have
-  add = NAA %>% filter(length_cate < min(NAA$length_cate)*2-1)
-  add = add %>% mutate(length_cate = rep(1:(min(add$length_cate)-1)), number = 0)
+  # add the data that NAA does not have <- なにこれ？
+  # add = NAA %>% filter(length_cate < min(NAA$length_cate)*2-1)
+  # add = add %>% mutate(length_cate = rep(1:(min(add$length_cate)-1)), number = 0)
+  
+  add = data.frame(length_cate = rep(1:(min(NAA$length_cate)-1), each = length(unique(NAA$age))), age = unique(NAA$age), number = 0)
   NAA = rbind(add, NAA)
   NAA = NAA %>% arrange(length_cate, age) 
-  sum = NAA %>% group_by(length_cate) %>% summarize(sum = sum(number)) %>% mutate(age = 11) %>% dplyr::rename(number = sum)
+  sum = NAA %>% dplyr::group_by(length_cate) %>% dplyr::summarize(sum = sum(number)) %>% mutate(age = 11) %>% dplyr::rename(number = sum)
   number_at_age = rbind(NAA, sum) %>% tidyr::spread(key = length_cate, value = number)
   number_at_age$age = as.character(number_at_age$age)
   number_at_age[12, 1] = "total"
@@ -87,7 +89,7 @@ for(i in 1:length(sheets)){
   # step 3; make the tables of age composition (AC)
   AC = left_join(NAA, sum %>% select(-age) %>% dplyr::rename(sum = number), by = "length_cate") %>% mutate(freq = ifelse(sum > 0, number/sum, 0))
   AC = AC %>% select(length_cate, age, freq)
-  a_sum = AC %>% group_by(length_cate) %>% summarize(sum = sum(freq)) %>% mutate(age = 11) %>% dplyr::rename(freq = sum)
+  a_sum = AC %>% dplyr::group_by(length_cate) %>% dplyr::summarize(sum = sum(freq)) %>% mutate(age = 11) %>% dplyr::rename(freq = sum)
   age_composition = rbind(AC, a_sum) %>% tidyr::spread(key = length_cate, value = freq)
   age_composition$age = as.character(age_composition$age)
   age_composition[12, 1] = "total"
@@ -114,7 +116,7 @@ for(i in 1:length(sheets)){
     add = data.frame(length_cate = 30, age = rep(0:10), freq = 0, number = 0, bisu = 0)
     AC2 = rbind(AC2, add)
   }
-  num_ac2 = AC2 %>% group_by(length_cate) %>% summarize(total = mean(number)) %>% mutate(age = 11) %>% dplyr::rename(bisu = total)
+  num_ac2 = AC2 %>% dplyr::group_by(length_cate) %>% dplyr::summarize(total = mean(number)) %>% mutate(age = 11) %>% dplyr::rename(bisu = total)
   number_at_age2 = rbind(AC2 %>% select(age, length_cate, bisu), num_ac2) %>% tidyr::spread(key = length_cate, value = bisu)
   number_at_age2$age = as.character(number_at_age2$age)
   number_at_age2[12, 1] = "total"
@@ -138,8 +140,8 @@ for(i in 1:length(sheets)){
   mode(number_at_age3$age)
   length = number_at_age3 %>% mutate(sum_length = (as.numeric(as.character(as.factor(length))) + 0.5)*number)
   
-  s_length_age = length %>% group_by(age) %>% summarize(sum_l = sum(sum_length))
-  s_number_age = length %>% group_by(age) %>% summarize(sum_n = sum(number))
+  s_length_age = length %>% dplyr::group_by(age) %>% dplyr::summarize(sum_l = sum(sum_length))
+  s_number_age = length %>% dplyr::group_by(age) %>% dplyr::summarize(sum_n = sum(number))
   # s_length_age = ddply(length, .(age), summarize, sum_l = sum(sum_length))
   # s_number_age = ddply(length, .(age), summarize, sum_n = sum(number))
   
