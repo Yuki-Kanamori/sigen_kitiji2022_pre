@@ -16,6 +16,7 @@ require(abind)
 require(gridExtra)
 require(ggrepel)
 require(grid)
+require(gtable)
 
 # set working directory -----------------------------------------------------------
 # please change here
