@@ -52,6 +52,8 @@ summary(tai_hati)
 a = 473.69
 b = -0.2583
 cv = 0.0448
+
+
 # PとS以外
 kg = tai_hati %>% group_by(year, season, iri_bisu) %>% dplyr::summarize(sum = sum(kg)) %>% filter(iri_bisu != "S") %>% filter(iri_bisu != "P") %>% mutate(n_iri_bisu = as.numeric(iri_bisu))
 # summary(kg)
