@@ -311,3 +311,53 @@ th = theme(panel.grid.major = element_blank(),
            legend.position = c(0.85, 0.8),
            legend.background = element_rect(fill = "white", size = 0.4, linetype = "solid", colour = "black"))
 fig9 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(expand = c(0,0), breaks=seq(2, 36, by = 2))+scale_y_continuous(expand = c(0,0),limits = c(0, 11))
+
+
+hist = tohoku %>% dplyr::group_by(area) %>% dplyr::summarize(sum = sum(total_number))
+hist_aomori = left_join(tohoku, hist, by = "area") %>% filter(area == "岩手県以北") %>% mutate(freq = total_number/sum) %>% mutate(area = "青森県")
+hist_miyagi = left_join(tohoku, hist, by = "area") %>% filter(area == "宮城県以南") %>% mutate(freq = total_number/sum) %>% mutate(area = "宮城県")
+summary(hist_aomori)
+
+hist = rbind(hist_aomori, hist_miyagi)
+hist = hist %>% filter(taityo < 50)
+
+hist2 = data.frame(taityo = rep(max(hist$taityo):(max(hist$taityo)+2), each = 2), area = c("青森県", "宮城県"), freq = 0)
+hist = rbind(hist %>% select(area, taityo, freq), hist2)
+hist$area = factor(hist$area, levels = c("青森県", "宮城県"))
+
+# g = ggplot(hist_aomori %>% filter(taityo < 50) %>% filter(freq > 0.00001), aes(x = taityo, y = freq))
+# b = geom_bar(stat = "identity", width = 0.5, colour = "black")
+# lab = labs(x = "体長（cm）", y = "頻度", fill = "")
+# col_catch = c("white", "grey0")
+# c = scale_fill_manual(values = col_catch)
+# th = theme(panel.grid.major = element_blank(),
+#            panel.grid.minor = element_blank(),
+#            axis.text.x = element_text(size = rel(1.8), colour = "black"),
+#            axis.text.y = element_text(size = rel(1.8), colour = "black"),
+#            axis.title.x = element_text(size = rel(1.5)),
+#            axis.title.y = element_text(size = rel(1.5)),
+#            legend.title = element_blank(),
+#            legend.text = element_text(size = rel(1.8)),
+#            strip.text.x = element_text(size = rel(1.8)),
+#            legend.position = c(0.85, 0.8),
+#            legend.background = element_rect(fill = "white", size = 0.4, linetype = "solid", colour = "black"))
+# fig9 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(expand = c(0,0), breaks=seq((min(hist_aomori$taityo)-2), 40, by = 2))+scale_y_continuous(expand = c(0,0),limits = c(0, (max(hist_aomori$freq))+0.01))
+
+g = ggplot(hist, aes(x = taityo, y = freq))
+b = geom_bar(stat = "identity", width = 0.5, colour = "black")
+f = facet_wrap( ~ area, ncol = 1)
+lab = labs(x = "体長（cm）", y = "頻度", fill = "")
+col_catch = c("white", "grey0")
+c = scale_fill_manual(values = col_catch)
+th = theme(panel.grid.major = element_blank(),
+           panel.grid.minor = element_blank(),
+           axis.text.x = element_text(size = rel(1.8), colour = "black"),
+           axis.text.y = element_text(size = rel(1.8), colour = "black"),
+           axis.title.x = element_text(size = rel(1.5)),
+           axis.title.y = element_text(size = rel(1.5)),
+           legend.title = element_blank(),
+           legend.text = element_text(size = rel(1.8)),
+           strip.text.x = element_text(size = rel(1.8)),
+           legend.position = c(0.85, 0.8),
+           legend.background = element_rect(fill = "white", size = 0.4, linetype = "solid", colour = "black"))
+fig9 = g+b+f+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(expand = c(0,0), breaks=seq(0, 40, by = 2))+scale_y_continuous(expand = c(0,0),limits = c(0, max(hist$freq)+0.01))
