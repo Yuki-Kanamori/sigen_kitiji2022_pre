@@ -24,9 +24,9 @@ g_miya = read.csv(paste0(dir, "catch_miyagi.csv"), fileEncoding = fileEncoding)
 #summary(g_miya)
 g_miya = g_miya %>% mutate(ymd = as.Date(g_miya$年月日, format = "%Y/%m/%d")) %>% 
   dplyr::rename(mizuage = 日別水揚量, size = 魚種コード) %>% select(ymd, size, mizuage) %>% 
-  mutate(year = as.numeric(str_sub(ymd, 1, 4)), month = as.numeric(str_sub(ymd, 6, 7)), day = as.numeric(str_sub(ymd, 9, 10))) %>%
-  mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"))
-g_miya2 = ddply(g_miya, .(size, year, month, season), summarize, total = sum(mizuage))
+  mutate(year = as.numeric(str_sub(ymd, 1, 4)), month = as.numeric(str_sub(ymd, 6, 7)), day = as.numeric(str_sub(ymd, 9, 10))) %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"))
+g_miya2 = g_miya %>% dplyr::group_by(size, year, month, season) %>% dplyr::summarize(total = sum(mizuage))
+
 # (1-C) こきちじの体長組成---------------------------------------------------------
 tai_miya = read.csv(paste0(dir, "taityo_miyagi.csv"), fileEncoding = fileEncoding)
 #summary(tai_miya)
