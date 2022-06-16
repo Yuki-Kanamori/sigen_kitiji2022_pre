@@ -15,6 +15,7 @@ require(stringr)
 require(abind)
 require(gridExtra)
 require(ggrepel)
+require(grid)
 
 # set working directory -----------------------------------------------------------
 # please change here
