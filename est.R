@@ -235,6 +235,7 @@ for(i in min(trawl$year):(max(trawl$year)-1)){
   survival = rbind(survival, surv)
 }
 survival = data.frame(surv = survival, year = rep((min(trawl$year)+1):(max(trawl$year)), each = 9), age = rep(2:10))
+
 ### selectivity at age
 a = 1524.581
 b = 0.082366
