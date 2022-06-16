@@ -7,25 +7,24 @@ tai_miya = read.csv(paste0(dir, "taityo_miyagi_fresco.csv"), fileEncoding = file
 #summary(tai_miya)
 tai_miya = tai_miya %>% filter(銘柄コード == 91) # 別の種や体長組成の算出に不必要なデータが入っている場合があるため，ここで念のためフィルターをかける
 tai_miya = tai_miya %>% dplyr::rename(ymd = 漁獲年月日, size_class = 開始の階級値, N = 度数) %>% select(ymd, size_class, N) %>% mutate(year = as.numeric(str_sub(ymd, 1, 4)), month = as.numeric(str_sub(ymd,5, 6)), day = as.numeric(str_sub(ymd, 7, 8))) %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"))
-
+miyagi_kokiti = tai_miya %>% dplyr::group_by(size_class) %>% dplyr::summarize(count = sum(N))
 
 
 # (1-D) きちじの体長組成---------------------------------------------------------
 yatyo = read.csv(paste0(dir, "yatyo_miyagi.csv"), fileEncoding = fileEncoding)
-# yatyo = read.xlsx("箱入れキチジ体長.xlsx", sheet = "2019")
-# head(yatyo)
-# summary(yatyo)
 yatyo = yatyo %>% dplyr::rename(ymd = 調査年月日, meigara = 銘柄, n_hako = 箱数)
-yatyo = yatyo %>% tidyr::gather(key = no, value = zentyo, 11:ncol(yatyo)) %>% 
-  mutate(year = as.numeric(str_sub(ymd, 1, 4)), month = as.numeric(str_sub(ymd, 6, 7)), gyokaku_kg = n_hako*7, gyokaku_n = meigara*n_hako) %>% 
-  mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"), tag = paste(ymd, meigara, sep = '_')) %>% na.omit()
-yatyo = yatyo %>% mutate(day = ifelse(yatyo$month/1 < 10, as.numeric(str_sub(yatyo$ymd, 8, 9)), as.numeric(str_sub(yatyo$ymd, 9, 10))))
 
-sokutei_n = yatyo %>% group_by(ymd, meigara) %>% dplyr::summarize(sokutei_n = n())
-# summary(sokutei_n)
-yatyo = left_join(yatyo, sokutei_n, by = c("ymd", "meigara")) %>% mutate(yatyo, rate = gyokaku_n/sokutei_n)
-# summary(yatyo)
-tag_rate = yatyo %>% select(tag, rate) %>% distinct(.keep_all = T) # tag = paste(ymd, meigara, sep = '_')
+
+yatyo = yatyo %>% mutate(id = 1:nrow(yatyo)) %>% tidyr::gather(key = no, value = zentyo, 12:(ncol(yatyo)))
+miyagi_kiti = yatyo %>% dplyr::group_by(zentyo) %>% dplyr::summarize(count = n()) %>% na.omit()
+
+
+miyagi_hist = rbind(miyagi_kokiti, miyagi_kiti %>% rename(size_class = zentyo)) %>% dplyr::group_by(size_class) %>% dplyr::summarize(count = sum(count)) %>% mutate(total = sum(count)) %>% mutate(freq = count/total)
+
+g = ggplot(miyagi_hist, aes(x = size_class, y = freq))
+b = geom_bar(stat = "identity")
+g+b
+
 
 
 
