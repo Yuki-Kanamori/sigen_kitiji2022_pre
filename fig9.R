@@ -207,6 +207,8 @@ comp_ps = ps %>% dplyr::group_by(season, taityo2, meigara) %>% dplyr::summarize(
 n_total = comp_ps %>% dplyr::group_by(season, meigara)  %>% dplyr::summarize(n_total = sum(count))
 # n_total = ddply(comp_ps, .(season, meigara), summarize, n_total = sum(count))
 n_total = n_total %>% mutate(n_box = c(3, 2)) %>% mutate(n_iri_bisu = n_total/n_box)
+
+
 stat_ps = ps %>% dplyr::group_by(season, meigara) %>% dplyr::summarize(meanBL = mean(taityo), SD = sd(taityo))
 # stat_ps = ddply(ps, .(season, meigara), summarize, meanBL = mean(taityo), SD = sd(taityo))
 comp_ps = left_join(comp_ps, n_total, by = c("season", "meigara"))
