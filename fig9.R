@@ -260,7 +260,7 @@ ao = left_join(ao, total_ao, by = "season")
 
 
 
-# step4. figures ---------------------------------------------------
+# step4. figure ---------------------------------------------------
 #=== 引き延ばす時のコード ===#
 # fig2 = fig %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(weight2)) # 宮城以南も使うとき
 # ao2 = ao %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(total_number))
