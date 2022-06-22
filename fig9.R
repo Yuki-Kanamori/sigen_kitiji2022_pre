@@ -168,7 +168,8 @@ tai_hati[is.na(tai_hati)] = 0
 # colnames(tai_hati)
 tai_hati = tai_hati %>% select(年, 月, 漁法名, CD, 入数, 月間数量.Ｋｇ.)
 colnames(tai_hati) = c("year", "month", "fisheries", "kikaku", "irisu", "kg")
-tai_hati$irisu = tai_hati$irisu%/%10
+
+# tai_hati$irisu = tai_hati$irisu%/%10
 tai_hati = tai_hati %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"), iri_bisu = ifelse(kikaku == 13, 'P', ifelse(kikaku == 7, 'S', as.numeric(str_sub(irisu, -2, -1)))))
 # unique(tai_hati$iri_bisu)
 # summary(tai_hati)
@@ -362,7 +363,7 @@ hist$area = factor(hist$area, levels = c("青森県", "宮城県"))
 #            legend.background = element_rect(fill = "white", size = 0.4, linetype = "solid", colour = "black"))
 # fig9 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(expand = c(0,0), breaks=seq((min(hist_aomori$taityo)-2), 40, by = 2))+scale_y_continuous(expand = c(0,0),limits = c(0, (max(hist_aomori$freq))+0.01))
 
-g = ggplot(hist, aes(x = taityo, y = freq))
+g = ggplot(hist %>% filter(freq != 0), aes(x = taityo, y = freq))
 b = geom_bar(stat = "identity", width = 0.5, colour = "black")
 f = facet_wrap( ~ area, ncol = 1)
 lab = labs(x = "体長（cm）", y = "頻度", fill = "")
