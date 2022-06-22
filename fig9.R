@@ -145,15 +145,19 @@ fig = rbind(miyagi %>% select(year, season, taityo, weight2, pref), fukuiba %>% 
 # 以下の項目は引き継ぎ資料の見出に対応．ないと訳分からなくなるから残した．
 # (3) 八戸 ------------------------------------------------------------------
 tai_hati = read.csv(paste0(dir, "hati_sokutei.csv"), fileEncoding = fileEncoding)
-# ファイルの規格コードが変なので，修正
+
+# 規格コード
 code_data = read.csv(paste0(dir, "hati_sokutei2019.csv"), fileEncoding = fileEncoding)
 (code = data.frame(規格名 = unique(code_data$規格名)))
 code$CD = c(NA, 13, 27, 28, 7, 8, 7, 7, 8, 31, 68, 31, 8, NA, 7, 8, NA, 27)
 (code2 = data.frame(規格名 = unique(tai_hati$規格名)))
+
 tai_hati = left_join(tai_hati, code, by = "規格名")
 tai_hati[is.na(tai_hati)] = 0
 tai_hati = tai_hati %>% select(年, 月, 漁法名, CD, 入数, 月間数量.Ｋｇ.)
 colnames(tai_hati) = c("year", "month", "fisheries", "kikaku", "irisu", "kg")
+
+
 
 # 青森県の基データは銘柄と入尾数がスペース区切で一つのセルに入力されているため，エクセルの区切り位置機能を使って銘柄と入尾数のセルを分割してhati_sokutei.csvを作成している
 # しかし，年によってスペースの入り方が違うため，このあたりで入尾数をうまく引っ張り出せるように調整する必要がある
