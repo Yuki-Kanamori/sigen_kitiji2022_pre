@@ -1,18 +1,24 @@
+dir = "/Users/Yuki/Dropbox/業務/キチジ太平洋北部/SA2022/inputdata/"
+fileEncoding = "CP932"
+
 # # 3-2  図9; 漁獲物の体長組成  ------------------------------------------
 # set working directory -----------------------------------------------------------
 ### aomori
 ao2 = read.xlsx(paste0(dir, "catch_pref.xlsx"), sheet = "ao") %>% select(月, 数量kg) %>% dplyr::rename(catch_kg = 数量kg, month = 月) %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"))
 #summary(ao2)
 ao_sum2 = ao2 %>% dplyr::group_by(season) %>% dplyr::summarize(sum_kg = sum(catch_kg))
+
 ### iwate
 iwa2 = read.xlsx(paste0(dir, "catch_pref.xlsx"), sheet = "iwa") %>% select(-"合計", -"市場名", -"漁業種名", -"規格名") 
 iwa2 = iwa2  %>% tidyr::gather(key = date, value = catch_kg, 1:ncol(iwa2)) %>% mutate(month = as.numeric(str_sub(date, 6, 8))) %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12"))
 iwa_sum2 = iwa2 %>% dplyr::group_by(season) %>% dplyr::summarize(sum_kg = sum(catch_kg))
+
 ### fukusima
 fuku2 = read.xlsx(paste0(dir, "catch_pref.xlsx"), sheet = "fuku", startRow = 2) %>% na.omit()
 colnames(fuku2) = c("month", "catch_kg")
 fuku2 = fuku2 %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-12")) 
 fuku_sum2 = fuku2 %>% dplyr::group_by(season) %>% dplyr::summarize(sum_kg = sum(catch_kg))
+
 ### ibaraki
 iba2 = read.xlsx(paste0(dir, "catch_pref.xlsx"), sheet = "iba", startRow = 4)
 iba2 = iba2[-13, -2] 
@@ -122,8 +128,8 @@ miyagi = left_join(miyagi, rate, by = c('year', 'season', 'species'))
 miyagi = miyagi %>% mutate(weight2 = mean*rate) %>% mutate(pref = 'Miyagi')
 total = miyagi %>% dplyr::group_by(year, season) %>% dplyr::summarize(total = sum(weight2)) %>% mutate(pref = "miyagi") %>% as.data.frame()
 # head(total)
-# fukuiba_mae = 4248.8+1667.1　#fuku+iba
-# fukuiba_usiro = 948.5+16591.9 
+# fukuiba_mae = 6814.1+0　#fuku+iba
+# fukuiba_usiro = 1536.3+30 
 
 fukuiba_mae = fuku_sum2 %>% filter(season == "1-6") %>% select(sum_kg) + iba_sum2 %>% filter(season == "1-6") %>% select(sum_kg)
 fukuiba_usiro = fuku_sum2 %>% filter(season == "7-12") %>% select(sum_kg) + iba_sum2 %>% filter(season == "7-12") %>% select(sum_kg)
@@ -137,7 +143,8 @@ fukuiba = fukuiba %>% mutate(weight2 = sum*rate, pref = 'South of Miyagi')
 
 # head(fukuiba)
 # head(miyagi)
-fig = rbind(miyagi %>% select(year, season, taityo, weight2, pref), fukuiba %>% select(year, season, taityo, weight2, pref))
+fig = rbind(miyagi %>% select(year, season, taityo, weight2, pref), fukuiba %>% select(year, season, taityo, weight2, pref)) # 宮城と福島+茨城の2種類のデータが入っている -> 宮城だけ抜き出せば良い
+
 # figures
 # g = ggplot(fig %>% filter(taityo < 50), aes(x = taityo, y = weight2), stat = "identity")
 # b = geom_bar(stat = "identity")
@@ -168,6 +175,7 @@ tai_hati = tai_hati %>% mutate(season = ifelse(between(month, 1, 6), "1-6", "7-1
 a = 473.69
 b = -0.2583
 cv = 0.0448
+
 # PとS以外
 kg = tai_hati %>% group_by(year, season, iri_bisu) %>% dplyr::summarize(sum = sum(kg)) %>% filter(iri_bisu != "S") %>% filter(iri_bisu != "P") %>% mutate(n_iri_bisu = as.numeric(iri_bisu))
 # summary(kg)
@@ -262,13 +270,21 @@ total_ao = ao %>% dplyr::group_by(season) %>% dplyr::summarize(total = sum(bioma
 # catch_usiro = 4105.3+44273.1
 catch_mae = ao_sum2 %>% filter(season == "1-6") %>% select(sum_kg) + iwa_sum2 %>% filter(season == "1-6") %>% select(sum_kg)
 catch_usiro = ao_sum2 %>% filter(season == "7-12") %>% select(sum_kg) + iwa_sum2 %>% filter(season == "7-12") %>% select(sum_kg)
-total_ao = total_ao %>% mutate(catch = ifelse(total_ao$season == "1-6", as.numeric(catch_mae), as.numeric(catch_usiro))) %>% mutate(rate = catch/total)
+
+# # 青森＋岩手での引き延ばし
+# total_ao = total_ao %>% mutate(catch = ifelse(total_ao$season == "1-6", as.numeric(catch_mae), as.numeric(catch_usiro))) %>% mutate(rate = catch/total)
+# ao = left_join(ao, total_ao, by = "season") %>% mutate(number = rate*total_number)
+
+# 青森の漁獲量だけ使う
+total_ao = total_ao %>% mutate(catch = ifelse(total_ao$season == "1-6", as.numeric(ao_sum2 %>% filter(season == "1-6") %>% select(sum_kg)), as.numeric(ao_sum2 %>% filter(season == "7-12") %>% select(sum_kg))))
 # summary(total_ao)
-ao = left_join(ao, total_ao, by = "season") %>% mutate(number = rate*total_number)
+ao = left_join(ao, total_ao, by = "season")
 # summary(ao)
+
 # Tohoku area ---------------------------------------------------
 # 宮城以南 = 福島茨城 => 間違いだった．宮城も足す
 # 岩手以北 = 青森岩手（ただし，岩手は漁獲量を使っているだけで，体長データはない）
+
 # head(fukuiba)
 # head(miyagi)
 # head(ao)
@@ -283,14 +299,15 @@ ao = left_join(ao, total_ao, by = "season") %>% mutate(number = rate*total_numbe
 # fukuiba2 = ddply(fukuiba, .(taityo), summarize, total_number = sum(sum))
 
 
-fig2 = fig %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(weight2))
+# fig2 = fig %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(weight2)) # 宮城以南も使ってたやつ
+fig2 = fig %>% filter(pref == "Miyagi") %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(weight2))
 ao2 = ao %>% dplyr::group_by(taityo) %>% dplyr::summarize(total_number = sum(total_number))
-# fig2 = ddply(fig, .(taityo), summarize, total_number = sum(weight2))
-# ao2 = ddply(ao, .(taityo), summarize, total_number = sum(total_number))
 
-tohoku = rbind(fig2 %>% mutate(area = "宮城県以南"), ao2 %>% mutate(area = "岩手県以北"))
+
+# tohoku = rbind(fig2 %>% mutate(area = "宮城県以南"), ao2 %>% mutate(area = "岩手県以北"))
+tohoku = rbind(fig2 %>% mutate(area = "Miyagi"), ao2 %>% mutate(area = "青森"))
 tohoku = tohoku %>% dplyr::group_by(area, taityo) %>% dplyr::summarize(total_number = sum(total_number))
-# tohoku = ddply(tohoku, .(area, taityo), summarize, total_number = sum(total_number))
+
 
 # unique(tohoku$area)
 # levels(tohoku$area) 
@@ -316,8 +333,8 @@ fig9 = g+b+lab+c+theme_bw(base_family = "HiraKakuPro-W3")+th+scale_x_continuous(
 
 
 hist = tohoku %>% dplyr::group_by(area) %>% dplyr::summarize(sum = sum(total_number))
-hist_aomori = left_join(tohoku, hist, by = "area") %>% filter(area == "岩手県以北") %>% mutate(freq = total_number/sum) %>% mutate(area = "青森県")
-hist_miyagi = left_join(tohoku, hist, by = "area") %>% filter(area == "宮城県以南") %>% mutate(freq = total_number/sum) %>% mutate(area = "宮城県")
+hist_aomori = left_join(tohoku, hist, by = "area") %>% filter(area == "青森") %>% mutate(freq = total_number/sum) %>% mutate(area = "青森県")
+hist_miyagi = left_join(tohoku, hist, by = "area") %>% filter(area == "Miyagi") %>% mutate(freq = total_number/sum) %>% mutate(area = "宮城県")
 summary(hist_aomori)
 
 hist = rbind(hist_aomori, hist_miyagi)

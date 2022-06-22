@@ -20,7 +20,7 @@ require(gtable) # fig2のみ
 
 # set working directory -----------------------------------------------------------
 # please change here
-setwd("/Users/Yuki/Dropbox/業務/キチジ太平洋北部/SA2022/inputdata")
+setwd("/Users/Yuki/Dropbox/業務/キチジ太平洋北部/SA2022/inputdata/")
 options(warn = -1)
 
 # -------------------------------------------------------------------------
